@@ -1,6 +1,4 @@
 import { omit } from "lodash";
-import { nanoid } from "nanoid";
-import Ctx from "../types/context.type";
 import {
   CreateUserInput,
   ConfirmUserInput,
@@ -11,6 +9,8 @@ import { UserModel } from "./user.schema";
 import { signJwt } from "../utils/jwt.utils";
 import { CookieOptions } from "express";
 import { comparePassword } from "../utils/authUtils";
+import type Ctx from "../types/context.type";
+import mailer from "../utils/mailer";
 
 const cookieOptions: CookieOptions = {
   domain: "localhost", // <- Change to your client domain
@@ -31,8 +31,23 @@ export class UserService {
     return this.userModel.findById(id);
   }
 
-  async createUser(input: CreateUserInput) {
-    return this.userModel.create(input);
+  async createUser(input: CreateUserInput, context: Ctx) {
+    const user = await this.userModel.create(input);
+
+    const jwt = signJwt(omit(user.toJSON(), ["password", "active"]));
+
+    // Set the JWT in a cookie
+    context.res.cookie("token", jwt, cookieOptions);
+
+    await mailer.sendMail({
+      from: "muneeb.hashone@gmail.com",
+      to: user.email,
+      subject: "Welcome to our website (Express-typescript)",
+      text: `Please verify your account using verification code: ${user.confirmToken}`,
+    });
+
+    // return the user
+    return { ...user.toJSON(), token: jwt };
   }
 
   async confirmUser({ email, confirmToken }: ConfirmUserInput) {
@@ -77,36 +92,37 @@ export class UserService {
     context.res.cookie("token", jwt, cookieOptions);
 
     // return the user
+
     return { ...user.toJSON(), token: jwt };
   }
 
-  async loginOrSignUpWithGoogle(
-    { email, input }: { email: string; input: CreateUserInput },
-    context: Ctx
-  ) {
-    const user = await this.userModel
-      .findOne({ email })
-      .select("-__v -confirmToken");
+  // async loginOrSignUpWithGoogle(
+  //   { email, input }: { email: string; input: CreateUserInput },
+  //   context: Ctx
+  // ) {
+  //   const user = await this.userModel
+  //     .findOne({ email })
+  //     .select("-__v -confirmToken");
 
-    if (!user) {
-      const newUser = await this.createUser({
-        ...input,
-      });
+  //   if (!user) {
+  //     const newUser = await this.createUser({
+  //       ...input,
+  //     });
 
-      const jwt = signJwt(omit(newUser.toJSON(), ["password", "active"]));
+  //     const jwt = signJwt(omit(newUser.toJSON(), ["password", "active"]));
 
-      context.res.cookie("token", jwt, cookieOptions);
+  //     context.res.cookie("token", jwt, cookieOptions);
 
-      return { ...newUser.toJSON(), token: jwt };
-    }
+  //     return { ...newUser.toJSON(), token: jwt };
+  //   }
 
-    const jwt = signJwt(omit(user.toJSON(), ["password", "active"]));
+  //   const jwt = signJwt(omit(user.toJSON(), ["password", "active"]));
 
-    context.res.cookie("token", jwt, cookieOptions);
+  //   context.res.cookie("token", jwt, cookieOptions);
 
-    // return the user
-    return { ...user.toJSON(), token: jwt };
-  }
+  //   // return the user
+  //   return { ...user.toJSON(), token: jwt };
+  // }
 
   async updateUser(userId: string, input: UpdateUserInput) {
     return this.userModel.findOneAndUpdate({ _id: userId }, input, {

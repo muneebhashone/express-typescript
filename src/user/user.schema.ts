@@ -58,13 +58,11 @@ export class User {
   @prop({ default: () => nanoid(32) })
   confirmToken: string;
 }
-
 @ObjectType()
-export class UserLogin extends User {
+export class UserAuthSchema extends User {
   @Field()
   token: string;
 }
-
 @InputType()
 export class CreateUserInput {
   @Field()

@@ -5,18 +5,21 @@ import {
   LoginInput,
   UpdateUserInput,
   User,
-  UserLogin,
+  UserAuthSchema,
 } from "./user.schema";
 import { UserService } from "./user.service";
 import type CtxType from "../types/context.type";
 
 @Resolver(() => User)
 export class UserResolver {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService = new UserService()) {}
 
-  @Mutation(() => User)
-  async registerUser(@Arg("input") input: CreateUserInput) {
-    return this.userService.createUser(input);
+  @Mutation(() => UserAuthSchema)
+  async registerUser(
+    @Arg("input") input: CreateUserInput,
+    @Ctx() context: CtxType
+  ) {
+    return this.userService.createUser(input, context);
   }
 
   @Mutation(() => User)
@@ -24,14 +27,14 @@ export class UserResolver {
     return this.userService.confirmUser(input);
   }
 
-  @Mutation(() => User)
-  async loginOrSignUpWithGoogle(
-    @Arg("input") input: CreateUserInput,
-    @Arg("email") email: string,
-    @Ctx() context: CtxType
-  ) {
-    return this.userService.loginOrSignUpWithGoogle({ email, input }, context);
-  }
+  // @Mutation(() => UserAuthSchema)
+  // async loginOrSignUpWithGoogle(
+  //   @Arg("input") input: CreateUserInput,
+  //   @Arg("email") email: string,
+  //   @Ctx() context: CtxType
+  // ) {
+  //   return this.userService.loginOrSignUpWithGoogle({ email, input }, context);
+  // }
 
   @Mutation(() => User)
   async updateUser(
@@ -41,7 +44,7 @@ export class UserResolver {
     return this.userService.updateUser(context.req.user._id, input);
   }
 
-  @Query(() => UserLogin, { nullable: true })
+  @Query(() => UserAuthSchema, { nullable: true })
   async login(@Arg("input") input: LoginInput, @Ctx() context: CtxType) {
     return this.userService.login(input, context);
   }

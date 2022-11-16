@@ -45,9 +45,9 @@ async function bootstrap() {
   });
 
   app.listen(port, () => {
-    console.log(`⚡️[Express]: Server is running at https://localhost:${port}`);
+    console.log(`⚡️[Express]: Server is running at http://localhost:${port}`);
     console.log(
-      `⚡️[GraphQL]: Server is running at https://localhost:${port}/graphql`
+      `⚡️[GraphQL]: Server is running at http://localhost:${port}/graphql`
     );
   });
 }
