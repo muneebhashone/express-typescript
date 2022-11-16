@@ -1,5 +1,7 @@
 import nodemailer from "nodemailer";
 
+const apiKey = process.env.SEND_GRID_API_KEY;
+
 // create reusable transporter object using the default SMTP transport
 const mailer = nodemailer.createTransport({
   host: "smtp.sendgrid.net",
@@ -7,7 +9,7 @@ const mailer = nodemailer.createTransport({
   secure: false, // true for 465, false for other ports
   auth: {
     user: "apikey", // generated ethereal user
-    pass: "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",
+    pass: apiKey,
   },
 });
 
